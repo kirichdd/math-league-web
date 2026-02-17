@@ -1,0 +1,110 @@
+:root {
+    --bg: #000000;
+    --card: #1c1c1e;
+    --accent: #007aff;
+    --gold: #ffcc00;
+    --text: #ffffff;
+    --gray: #8e8e93;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.screen { display: none; width: 100%; padding: 20px; box-sizing: border-box; }
+.active { display: flex; flex-direction: column; }
+
+/* Шапка со статистикой */
+.header {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    background: var(--card);
+    padding: 15px 0;
+    border-radius: 20px;
+    border: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.stat-v { display: block; font-weight: bold; color: var(--gold); font-size: 1.4em; }
+
+/* Карточка юнита */
+.card {
+    background: var(--card);
+    width: 100%;
+    padding: 30px;
+    border-radius: 30px;
+    text-align: center;
+    border: 1px solid #333;
+}
+
+.unit-badge {
+    background: var(--accent);
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* Кнопки */
+.btn-main {
+    background: var(--accent);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 20px;
+    border-radius: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 25px;
+    box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
+}
+
+.ans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 100%;
+}
+
+.btn-ans {
+    background: #2c2c2e;
+    border: 2px solid #3a3a3c;
+    color: white;
+    padding: 20px;
+    border-radius: 20px;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Прогресс-бар */
+.progress-container {
+    width: 100%;
+    height: 12px;
+    background: #333;
+    border-radius: 6px;
+    margin-bottom: 40px;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 6px;
+    transition: width 0.3s;
+}
+
+.math-display {
+    font-size: 3.5em;
+    font-weight: bold;
+    margin: 40px 0;
+}
