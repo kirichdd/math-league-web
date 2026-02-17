@@ -3,96 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math League</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { font-family: -apple-system, sans-serif; background: #000; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .header { width: 100%; display: flex; justify-content: space-around; background: #1c1c1e; padding: 15px 0; border-radius: 20px; margin-bottom: 20px; border: 1px solid #333; }
-        .stat { text-align: center; }
-        .stat-v { display: block; font-weight: bold; color: #ffcc00; font-size: 1.2em; }
-        .card { background: #1c1c1e; width: 100%; padding: 25px; border-radius: 30px; text-align: center; box-sizing: border-box; border: 1px solid #333; }
-        .btn-main { background: #007aff; color: #fff; border: none; width: 100%; padding: 20px; border-radius: 20px; font-size: 1.2em; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,122,255,0.3); }
-        .btn-ans { background: #2c2c2e; border: 1px solid #444; color: #fff; padding: 20px; border-radius: 15px; font-size: 1.5em; font-weight: bold; }
-        #game-screen { display: none; width: 100%; text-align: center; }
-        .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 30px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="main-screen" style="width: 100%;">
+    <div id="main-screen" class="screen active">
         <div class="header">
-            <div class="stat"><span class="stat-v" id="coins">0.0</span><small>💰 $MATH</small></div>
-            <div class="stat"><span class="stat-v" id="xp">0</span><small>🌟 XP</small></div>
+            <div class="stat"><span class="stat-v" id="coins">0.0</span><small>$MATH</small></div>
+            <div class="stat"><span class="stat-v" id="xp">0</span><small>XP</small></div>
         </div>
+
         <div class="card">
-            <div style="background:#007aff; display:inline-block; padding:4px 12px; border-radius:8px; font-size:0.8em; margin-bottom:15px;">LEVEL <span id="lvl">1</span></div>
-            <h1 id="u-name" style="margin:0;">...</h1>
-            <p style="color:#8e8e93;">⚡️ Энергия: <span id="energy">100</span>/100</p>
-            <button class="btn-main" onclick="start()">ИЗУЧАТЬ (-5 ⚡️)</button>
+            <div class="unit-badge">ЮНИТ 1: ОСНОВЫ</div>
+            <h1 id="u-name">Загрузка...</h1>
+            <div class="energy-text">⚡️ Энергия: <span id="energy">0</span>/100</div>
+            <button class="btn-main" onclick="startGame()">ИГРАТЬ (-5 ⚡️)</button>
         </div>
     </div>
 
-    <div id="game-screen">
-        <h2 style="color:#8e8e93;">Реши пример</h2>
-        <div id="prob" style="font-size: 4em; font-weight: bold; margin: 40px 0;">?</div>
+    <div id="game-screen" class="screen">
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-fill"></div>
+        </div>
+        <h2 id="quest-text">Реши пример</h2>
+        <div id="prob" class="math-display">?</div>
         <div class="ans-grid" id="ans-box"></div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        const API = "https://neglectingly-colorful-griffin.ngrok-free.dev";
-        const uid = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 0;
-        let user = null;
-
-        async function sync() {
-            try {
-                const r = await fetch(`${API}/get_user/${uid}`);
-                user = await r.json();
-                document.getElementById('u-name').innerText = user.name;
-                document.getElementById('coins').innerText = user.coins.toFixed(1);
-                document.getElementById('xp').innerText = user.xp;
-                document.getElementById('lvl').innerText = user.lvl;
-                document.getElementById('energy').innerText = user.energy;
-            } catch(e) { console.error("Offline"); }
-        }
-
-        function start() {
-            if(user.energy < 5) return tg.showAlert("Мало энергии!");
-            document.getElementById('main-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'block';
-            const a = Math.floor(Math.random()*10)+1, b = Math.floor(Math.random()*10)+1, res = a+b;
-            document.getElementById('prob').innerText = `${a} + ${b}`;
-            const opts = [res, res+1, res-1, res+2].sort(() => Math.random()-0.5);
-            const box = document.getElementById('ans-box');
-            box.innerHTML = '';
-            opts.forEach(o => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-ans'; btn.innerText = o;
-                btn.onclick = () => finish(o, res);
-                box.appendChild(btn);
-            });
-        }
-
-        async function finish(sel, res) {
-            if(sel === res) {
-                tg.HapticFeedback.notificationOccurred('success');
-                await fetch(`${API}/update_score`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({user_id: uid, xp: 10, coins: 0.5})
-                });
-                tg.showAlert("Верно! +0.5 $MATH");
-            } else {
-                tg.HapticFeedback.notificationOccurred('error');
-                tg.showAlert("Ошибка!");
-            }
-            document.getElementById('game-screen').style.display = 'none';
-            document.getElementById('main-screen').style.display = 'block';
-            sync();
-        }
-
-        sync();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
