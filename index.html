@@ -1,149 +1,46 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math League Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg-color: #000; --card-bg: #1c1c1e; --accent: #007aff; --text: #fff; }
-        body { font-family: -apple-system, system-ui; background: var(--bg-color); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; box-sizing: border-box; }
-        
-        /* Экраны */
-        .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
-        .active { display: flex; }
-
-        /* Шапка со статой */
-        .header { width: 100%; display: flex; justify-content: space-around; background: var(--card-bg); padding: 15px 0; border-radius: 20px; margin-bottom: 20px; }
-        .stat-item { text-align: center; }
-        .stat-value { display: block; font-weight: bold; color: #ffcc00; }
-
-        /* Энергия */
-        .energy-section { width: 100%; margin-bottom: 20px; }
-        .energy-bar { width: 100%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; }
-        .energy-fill { height: 100%; background: linear-gradient(90deg, #ff9500, #ffcc00); width: 0%; transition: width 0.3s; }
-
-        /* Игровая карточка */
-        .card { background: var(--card-bg); width: 100%; padding: 40px 20px; border-radius: 30px; text-align: center; box-sizing: border-box; }
-        .math-problem { font-size: 3em; font-weight: bold; margin: 20px 0; }
-        
-        /* Кнопки ответов */
-        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 20px; }
-        .btn-answer { background: #2c2c2e; border: 2px solid #3a3a3c; color: white; padding: 20px; border-radius: 15px; font-size: 1.5em; font-weight: bold; }
-        .btn-answer:active { background: var(--accent); border-color: var(--accent); }
-
-        .btn-main { background: var(--accent); color: white; border: none; width: 100%; padding: 20px; border-radius: 20px; font-size: 1.2em; font-weight: bold; margin-top: 20px; }
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .stats-card { background: #1c1c1e; padding: 20px; border-radius: 20px; width: 80%; text-align: center; border: 1px solid #333; }
+        .balance { font-size: 2em; color: #ffcc00; margin: 10px 0; font-weight: bold; }
+        .btn-play { background: #007aff; color: white; border: none; width: 80%; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 1.2em; margin-top: 20px; }
+        .energy { font-size: 0.9em; color: #8e8e93; margin-top: 10px; }
     </style>
 </head>
 <body>
-
-    <div id="main-screen" class="screen active">
-        <div class="header">
-            <div class="stat-item"><span class="stat-label">Монеты</span><span id="coins" class="stat-value">0.0</span></div>
-            <div class="stat-item"><span class="stat-label">XP</span><span id="xp" class="stat-value">0</span></div>
-        </div>
-        <div class="energy-section">
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 5px;">
-                <span>⚡️ Энергия</span><span id="energy-text">0/100</span>
-            </div>
-            <div class="energy-bar"><div id="energy-fill" class="energy-fill"></div></div>
-        </div>
-        <div class="card">
-            <div style="background: #007aff; display: inline-block; padding: 5px 15px; border-radius: 10px; font-size: 0.8em; margin-bottom: 10px;">LEVEL <span id="level">1</span></div>
-            <h1 id="user-name">...</h1>
-            <p style="color: #8e8e93;">Набери 50 XP для нового уровня</p>
-            <button class="btn-main" onclick="startLesson()">ИЗУЧАТЬ</button>
-        </div>
+    <div class="stats-card">
+        <div style="color: #8e8e93;">Ваш баланс</div>
+        <div id="coins" class="balance">0.0 $MATH</div>
+        <div class="energy">⚡️ Энергия: <span id="energy">100</span>/100</div>
     </div>
-
-    <div id="game-screen" class="screen">
-        <h2 style="color: #8e8e93;">Реши пример</h2>
-        <div class="math-problem" id="problem-text">2 + 2</div>
-        <div class="answers-grid" id="answers-btns">
-            </div>
-        <button class="btn-main" style="background: #333; margin-top: 40px;" onclick="showMain()">Выйти</button>
-    </div>
+    
+    <button class="btn-play" onclick="startPlay()">ИГРАТЬ</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-
-        // !!! ЗАМЕНИ ЭТУ ССЫЛКУ НА СВОЮ ИЗ NGROK !!!
+        
+        // Твоя ссылка из ngrok (не забудь обновлять, если перезапустил ngrok!)
         const API_URL = "https://neglectingly-colorful-griffin.ngrok-free.dev";
         const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 0;
 
-        let currentUser = null;
-
-        async function loadData() {
+        async function load() {
             try {
                 const res = await fetch(`${API_URL}/get_user/${userId}`);
                 const data = await res.json();
-                currentUser = data;
-                updateUI();
-            } catch (e) { console.error("API Error"); }
+                document.getElementById('coins').innerText = data.coins + " $MATH";
+                document.getElementById('energy').innerText = data.energy;
+            } catch(e) {}
+        }
+        
+        function startPlay() {
+            tg.showAlert("Урок начинается!");
         }
 
-        function updateUI() {
-            if (!currentUser) return;
-            document.getElementById('user-name').innerText = currentUser.name;
-            document.getElementById('level').innerText = currentUser.lvl;
-            document.getElementById('xp').innerText = currentUser.xp;
-            document.getElementById('coins').innerText = currentUser.coins.toFixed(1);
-            document.getElementById('energy-text').innerText = `${currentUser.energy}/100`;
-            document.getElementById('energy-fill').style.width = `${currentUser.energy}%`;
-        }
-
-        function showMain() {
-            document.getElementById('game-screen').classList.remove('active');
-            document.getElementById('main-screen').classList.add('active');
-            loadData();
-        }
-
-        function startLesson() {
-            if (currentUser.energy < 5) {
-                tg.showAlert("Недостаточно энергии!");
-                return;
-            }
-            document.getElementById('main-screen').classList.remove('active');
-            document.getElementById('game-screen').classList.add('active');
-            generateNewProblem();
-        }
-
-        function generateNewProblem() {
-            const lvl = currentUser.lvl;
-            let a, b, ans, op;
-            if (lvl < 5) { a = Math.floor(Math.random()*10)+1; b = Math.floor(Math.random()*10)+1; ans = a + b; op = "+"; }
-            else { a = Math.floor(Math.random()*20)+5; b = Math.floor(Math.random()*15)+1; ans = a - b; op = "-"; }
-
-            document.getElementById('problem-text').innerText = `${a} ${op} ${b}`;
-            
-            const options = new Set([ans]);
-            while(options.size < 4) { options.add(ans + Math.floor(Math.random()*10)-5); }
-            
-            const btns = document.getElementById('answers-btns');
-            btns.innerHTML = "";
-            [...options].sort(() => Math.random() - 0.5).forEach(opt => {
-                const b = document.createElement('button');
-                b.className = 'btn-answer';
-                b.innerText = opt;
-                b.onclick = () => checkAnswer(opt, ans);
-                btns.appendChild(b);
-            });
-        }
-
-        function checkAnswer(chosen, correct) {
-            if (chosen === correct) {
-                tg.HapticFeedback.notificationOccurred('success');
-                tg.showAlert("Верно! +10 XP");
-                // Тут в будущем добавим запрос к серверу на сохранение
-            } else {
-                tg.HapticFeedback.notificationOccurred('error');
-                tg.showAlert("Ошибка!");
-            }
-            showMain();
-        }
-
-        loadData();
+        load();
     </script>
 </body>
 </html>
