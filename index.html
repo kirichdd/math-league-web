@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Math League</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="main-screen" class="screen active">
         <div class="header">
             <div class="stat"><span class="stat-v" id="coins">0.0</span><small>$MATH</small></div>
             <div class="stat"><span class="stat-v" id="xp">0</span><small>XP</small></div>
+            <div class="stat"><span class="stat-v" id="lvl">1</span><small>LVL</small></div>
         </div>
 
         <div class="card">
-            <div class="unit-badge">ЮНИТ 1: ОСНОВЫ</div>
+            <div class="unit-badge" id="unit-name">ЮНИТ 1: ОСНОВЫ</div>
             <h1 id="u-name">Загрузка...</h1>
             <div class="energy-text">⚡️ Энергия: <span id="energy">0</span>/100</div>
             <button class="btn-main" onclick="startGame()">ИГРАТЬ (-5 ⚡️)</button>
@@ -24,16 +23,12 @@
     </div>
 
     <div id="game-screen" class="screen">
-        <div class="progress-container">
-            <div id="progress-bar" class="progress-fill"></div>
-        </div>
+        <div class="progress-container"><div id="progress-bar" class="progress-fill"></div></div>
         <h2 id="quest-text">Реши пример</h2>
         <div id="prob" class="math-display">?</div>
         <div class="ans-grid" id="ans-box"></div>
     </div>
-<div class="progress-container">
-    <div id="progress-bar" class="progress-fill" style="width: 0%"></div>
-</div>
+
     <script src="script.js"></script>
 </body>
 </html>
