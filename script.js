@@ -1,21 +1,29 @@
 const tg = window.Telegram.WebApp;
 tg.expand();
 
+// ТВОЯ ССЫЛКА (Всегда проверяй, что она совпадает с той, что в терминале!)
 const API_URL = "https://neglectingly-colorful-griffin.ngrok-free.dev";
 const userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 0;
 
 let userData = null;
 let currentCorrectAnswer = null;
 
+// Функция для запросов с обходом предупреждения ngrok
+async function apiFetch(path, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true' // ВОТ ОН, СЕКРЕТНЫЙ КЛЮЧ 🔑
+    };
+    return fetch(`${API_URL}${path}`, { ...options, headers: { ...headers, ...options.headers } });
+}
+
 async function load() {
     try {
-        const r = await fetch(`${API_URL}/get_user/${userId}`);
-        const data = await r.json();
-        if (data.error) throw new Error("User not found");
-        userData = data;
+        const r = await apiFetch(`/get_user/${userId}`);
+        userData = await r.json();
         updateUI();
     } catch (e) {
-        console.error("Сервер недоступен");
+        console.error(e);
         document.getElementById('u-name').innerText = "Ошибка связи";
     }
 }
@@ -29,34 +37,39 @@ function updateUI() {
     document.getElementById('energy').innerText = userData.energy;
 }
 
+// ГЕНЕРАТОР В СТИЛЕ DUOLINGO (ЮНИТ 1)
 function startGame() {
-    // Если данные не загрузились, пробуем загрузить еще раз и выходим
-    if (!userData) {
-        tg.showAlert("Сервер не отвечает. Проверь Python и ngrok!");
-        load();
-        return;
-    }
-
-    if (userData.energy < 5) {
-        tg.showAlert("Энергия на нуле! Подожди восстановления.");
+    if (!userData || userData.energy < 5) {
+        tg.showAlert("Сервер не отвечает или мало энергии!");
         return;
     }
     
     document.getElementById('main-screen').classList.remove('active');
     document.getElementById('game-screen').classList.add('active');
     
-    // Генерация задачи (Юнит 1: Сравнение для новичков)
-    const a = Math.floor(Math.random() * 10) + 1;
-    const b = Math.floor(Math.random() * 10) + 1;
-    currentCorrectAnswer = Math.max(a, b);
+    // Новая логика: если уровень 1 — только сравнение, если выше — сложение
+    if (userData.lvl === 1) {
+        const a = Math.floor(Math.random() * 10) + 1;
+        const b = Math.floor(Math.random() * 10) + 1;
+        currentCorrectAnswer = Math.max(a, b);
+        document.getElementById('quest-text').innerText = "Кто больше?";
+        document.getElementById('prob').innerText = `${a} vs ${b}`;
+        renderButtons([a, b]);
+    } else {
+        const a = Math.floor(Math.random() * 10);
+        const b = Math.floor(Math.random() * 10);
+        currentCorrectAnswer = a + b;
+        document.getElementById('quest-text').innerText = "Сколько будет?";
+        document.getElementById('prob').innerText = `${a} + ${b} = ?`;
+        renderButtons([currentCorrectAnswer, currentCorrectAnswer + 1, currentCorrectAnswer - 1, currentCorrectAnswer + 2]);
+    }
+}
 
-    document.getElementById('quest-text').innerText = "Какое число больше?";
-    document.getElementById('prob').innerText = `${a} vs ${b}`;
-
+function renderButtons(opts) {
     const box = document.getElementById('ans-box');
     box.innerHTML = '';
-
-    [a, b].forEach(val => {
+    // Перемешиваем варианты
+    opts.sort(() => Math.random() - 0.5).forEach(val => {
         const btn = document.createElement('button');
         btn.className = 'btn-ans';
         btn.innerText = val;
@@ -68,15 +81,14 @@ function startGame() {
 async function checkAnswer(selected) {
     if (selected === currentCorrectAnswer) {
         tg.HapticFeedback.notificationOccurred('success');
-        await fetch(`${API_URL}/update_score`, {
+        await apiFetch('/update_score', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ user_id: userId, xp: 10, coins: 0.5 })
         });
         tg.showAlert("Верно! +0.5 $MATH");
     } else {
         tg.HapticFeedback.notificationOccurred('error');
-        tg.showAlert(`Ошибка! Большее число: ${currentCorrectAnswer}`);
+        tg.showAlert("Неправильно!");
     }
 
     document.getElementById('game-screen').classList.remove('active');
